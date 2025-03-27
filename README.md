@@ -1,108 +1,164 @@
-Documento Técnico - Análise de Crédito com Dash e Plotly
+📌 Visão Geral
+Este sistema automatizado realiza análise de crédito utilizando machine learning para classificar clientes como "aprovados" ou "negados" com base em suas informações financeiras e demográficas.
 
-Visão Geral
-Este projeto tem como objetivo fornecer uma interface interativa para análise de crédito de um conjunto de dados simulados. Utilizando as bibliotecas Dash e Plotly, o script oferece gráficos dinâmicos e filtros interativos, permitindo a visualização de dados de crédito em tempo real. Ele foi projetado para ser facilmente executado por outros usuários que possuam o dataset necessário.
+📋 Pré-requisitos
+Python 3.8+
 
-Requisitos
-Para executar este script, o usuário deve ter o seguinte ambiente configurado:
+Bibliotecas listadas em requirements.txt
 
-Python 3.7+
-Bibliotecas:
-Pandas: para manipulação de dados.
-Plotly: para criação de gráficos interativos.
-Dash: para construção da interface interativa web.
-Como instalar as dependências:
-Recomenda-se usar um ambiente virtual para gerenciar as dependências. Siga as etapas abaixo:
+Arquivo CSV com dados dos clientes
 
-Crie um ambiente virtual (opcional, mas recomendado):
+📂 Estrutura do Projeto
 
-python -m venv venv
+/analise_credito/
+│── /dados/
+│   └── dataset_credito_simulado.csv  # Dados de entrada
+│── /modelos/
+│   └── modelo_credito.pkl            # Modelo treinado
+│── analise_credito.py                # Script principal
+│── correlacao.png                    # Matriz de correlação
+│── README.md                         # Esta documentação
+└── requirements.txt                  # Dependências
 
-Ative o ambiente virtual:
+🔧 Instalação
 
-Windows:
-venv\Scripts\activate
+1. git clone [URL_DO_REPOSITORIO]
+cd analise_credito
 
-Linux/Mac:
-source venv/bin/activate
+2. Instale as dependências:
 
-Instale as bibliotecas necessárias:
+3. pip install -r requirements.txt
+
+🛠 Configuração
+
+Edite as variáveis no início do script principal conforme necessário:
+
+# Caminho para o arquivo de dados
+FILE_PATH = 'dados/dataset_credito_simulado.csv'
+
+# Colunas necessárias
+COLUNAS_NUMERICAS = ['Salário', 'Patrimônio', 'Parcelas_Médias']
+COLUNAS_CATEGORICAS = ['Estado', 'Cidade', 'Bairro', 'Status']
+
+🚀 Como Executar
+
+python analise_credito.py
+
+🔄 Fluxo de Processamento
+
+1. Carregamento de Dados
+
+Lê o arquivo CSV especificado
+
+Remove espaços extras nos nomes das colunas
+
+2. Pré-processamento
+
+Limpeza de valores monetários (remove 'R$', converte vírgulas)
+
+Conversão para tipos numéricos
+
+Imputação de valores faltantes
+
+3. Análise Exploratória
+
+Gera matriz de correlação
+
+Salva gráfico em correlacao.png
+
+4. Modelagem Preditiva
+
+Codifica variáveis categóricas
+
+Divide dados em treino/teste
+
+Treina modelo RandomForest
+
+5. Avaliação
+
+Gera relatório de classificação
+
+Exibe matriz de confusão
+
+6. Persistência
+
+Salva modelo treinado em modelos/modelo_credito.pkl
+
+📊 Entrada de Dados
+
+O arquivo CSV deve conter no mínimo estas colunas:
+
+- Salário: Valor numérico ou formato monetário (R$1,234.56)
+
+- Patrimônio: Valor numérico ou formato monetário
+
+- Parcelas_Médias: Número de parcelas (valor inteiro)
+
+- Estado, Cidade, Bairro: Dados categóricos
+
+- Status: (0 = Negado, 1 = Aprovado)
+
+Exemplo de linha:
+
+Salário,Patrimônio,Parcelas_Médias,Estado,Cidade,Bairro,Status
+R$3,500.00,15000.00,5,SP,São Paulo,Moema,1
+
+📤 Saída
+
+1. Resultados do Modelo (console):
+
+Relatório de classificação
+
+Acurácia do modelo
+
+Matriz de confusão
+
+2. Arquivos Gerados:
+
+modelo_credito.pkl: Modelo treinado
+
+correlacao.png: Matriz de correlação
+
+🛠️ Como Adicionar Novos Dados
+
+Para classificar novos clientes, crie um DataFrame com a mesma estrutura:
+
+novos_clientes = pd.DataFrame({
+    'Salário': [4000, 2500],
+    'Patrimônio': [18000, 8000],
+    'Parcelas_Médias': [4, 6],
+    'Estado': ['SP', 'RJ'],
+    'Cidade': ['São Paulo', 'Rio de Janeiro'],
+    'Bairro': ['Vila Olímpia', 'Copacabana']
+})
+
+# Carregar modelo
+modelo = joblib.load('modelos/modelo_credito.pkl')
+
+# Fazer previsões
+previsoes = modelo.predict(novos_clientes)
+
+⚠️ Solução de Problemas
+
+Problema: Erro na imputação de valores
+Solução: Verifique se as colunas numéricas contêm valores válidos
+
+Problema: Erro ao gerar matriz de correlação
+Solução: Confira se todas colunas numéricas foram convertidas corretamente
 
 
-pip install pandas plotly dash
+📈 Melhorias Futuras
 
-Estrutura do Código
-O script é dividido em várias seções que podem ser explicadas da seguinte forma:
+- Adicionar validação cruzada
 
-Carregamento de Dados: O código começa carregando um dataset de crédito simulado (CSV). O arquivo CSV contém informações como nome do cliente, status de crédito, salário, entre outros.
+- Implementar tunagem de hiperparâmetros
 
-Funções de Preprocessamento: A função converter_moeda é utilizada para formatar colunas financeiras, como salário e empréstimos, no formato monetário brasileiro (R$).
+- Criar interface gráfica
 
-Criação de Gráficos: Gráficos interativos são criados utilizando Plotly, com opções de visualização de distribuição de score de crédito, status de crédito e a relação entre salário e crédito pré-aprovado.
+📄 Licença
 
-Interface com o Usuário (Dash): O Dash é utilizado para criar a interface web interativa, onde os usuários podem aplicar filtros para selecionar o status de crédito e o intervalo de score de crédito. O layout é composto por:
+Este projeto está licenciado sob a licença MIT.
+   
 
-Dropdown para seleção de status de crédito.
-RangeSlider para selecionar a faixa de score de crédito.
-Gráficos interativos baseados nos filtros aplicados.
-Execução do Servidor: O servidor Dash é iniciado, permitindo que o usuário interaja com os gráficos através de um navegador.
 
-Como Executar o Script
-1. Prepare o Dataset:
-Antes de executar o script, certifique-se de ter o dataset no formato CSV com as seguintes colunas:
 
-ID
-Nome
-Idade
-Gênero
-Estado
-Cidade
-Bairro
-Salário
-Patrimônio
-Empréstimos de 3 meses (Empréstimo_Mês1, Empréstimo_Mês2, Empréstimo_Mês3)
-Financiamento de 3 meses (Financiamento_Mês1, Financiamento_Mês2, Financiamento_Mês3)
-Parcelas Médias
-Score
-Status (Ruim, Moderado, Bom, Excelente)
-Crédito Pré-Aprovado
-
-2. Modifique o Caminho do Arquivo:
-Alterar o caminho do arquivo CSV no script para corresponder à localização do seu dataset:
-
-caminho_arquivo = "caminho/do/seu/arquivo/dataset_credito_simulado.csv"
-
-3. Execute o Script:
-No terminal ou prompt de comando, navegue até a pasta onde o script está localizado e execute o arquivo Python:
-
-python nome_do_script.py
-
-4. Acesse o Dashboard:
-Após a execução, o Dash estará rodando localmente. Abra um navegador e acesse o seguinte endereço:
-
-http://127.0.0.1:8050/
-Você verá a interface interativa com gráficos que podem ser filtrados conforme o seu desejo.
-
-Funcionalidades do Dashboard
-Dropdown para Status de Crédito: Permite filtrar os dados para exibir apenas informações de clientes com o status de crédito selecionado (Ruim, Moderado, Bom, Excelente).
-
-RangeSlider para Score de Crédito: Permite ajustar um intervalo de score de crédito e visualizar os dados de clientes dentro dessa faixa.
-
-Gráficos Interativos:
-
-Distribuição do Score de Crédito: Exibe a distribuição de scores dos clientes.
-Distribuição do Status de Crédito: Exibe a proporção de clientes em cada categoria de status de crédito.
-Relação entre Salário e Crédito Pré-Aprovado: Exibe um gráfico de dispersão mostrando como o salário dos clientes se relaciona com o crédito pré-aprovado.
-Exemplo de Uso
-Aqui está um exemplo básico de como interagir com o dashboard:
-
-Selecione o status "Excelente" no dropdown de status de crédito.
-Ajuste o RangeSlider para exibir apenas clientes com score de crédito entre 600 e 800.
-Observe como os gráficos são atualizados dinamicamente com base nesses filtros.
-Customizações Possíveis
-Alterar a aparência: Você pode modificar o estilo visual do Dash, incluindo cores, fontes e layout, utilizando CSS. Crie um arquivo CSS e aplique no projeto para personalizar ainda mais a interface.
-
-Adicionar novos filtros: Caso você deseje adicionar mais filtros interativos (por exemplo, filtrando por cidade ou patrimônio), basta adicionar novos componentes Dash e atualizar a função de callback para incluir esses filtros.
-
-Conclusão
-Este script permite uma análise de crédito interativa utilizando Dash e Plotly. Ele pode ser facilmente adaptado para diferentes datasets ou requisitos de visualização. Aproveite os recursos interativos para explorar os dados de forma dinâmica e eficiente!
