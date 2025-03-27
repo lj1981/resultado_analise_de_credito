@@ -1,3 +1,7 @@
 pandas
-iplotly
-dash
+numpy
+matplotlib.pyplot
+seaborn
+sklearn
+joblib
+re
