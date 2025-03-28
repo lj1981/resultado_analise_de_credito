@@ -2,30 +2,38 @@ import pandas as pd
 import numpy as np
 import matplotlib
 
-matplotlib.use('Agg')  # Usar backend não interativo
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
+from sklearn.pipeline import make_pipeline
+from imblearn.over_sampling import SMOTE
 import joblib
 import re
 import os
+import warnings
 
 
-def clean_numeric(value):
-    """Função para limpar e converter valores numéricos"""
-    if pd.isna(value):
+def clean_currency(value):
+    """Função melhorada para limpar valores monetários"""
+    if pd.isna(value) or value == '':
         return np.nan
-    if isinstance(value, str):
-        value = re.sub(r'[^\d.]', '', value.replace(',', '.'))
-        try:
-            return float(value)
-        except:
-            return np.nan
-    return float(value)
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    # Remove símbolos de moeda, espaços e trata separadores decimais
+    value = str(value).strip()
+    value = re.sub(r'[^\d,]', '', value)  # Mantém apenas dígitos e vírgulas
+    value = value.replace('.', '').replace(',', '.')  # Converte para formato decimal
+
+    try:
+        return float(value)
+    except:
+        return np.nan
 
 
 def main():
@@ -34,86 +42,122 @@ def main():
         file_path = '/home/luiz/Downloads/Projetos_One/analise_credito/dataset_credito_simulado.csv'
         print(f"\nCarregando dados de: {file_path}")
 
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, encoding='utf-8', delimiter=',')
         df.columns = df.columns.str.strip()
+
+        # Verificar se as colunas esperadas existem
+        required_cols = ['Salário', 'Patrimônio', 'Parcelas_Médias', 'Estado', 'Cidade', 'Bairro', 'Status']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            raise ValueError(f"Colunas obrigatórias faltando: {missing_cols}")
+
         print("\nDados carregados com sucesso. Primeiras linhas:")
         print(df.head().to_string())
 
         # 2. Pré-processamento de colunas numéricas
         numeric_cols = ['Salário', 'Patrimônio', 'Parcelas_Médias']
         for col in numeric_cols:
-            if col in df.columns:
-                df[col] = df[col].apply(clean_numeric)
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = df[col].apply(clean_currency)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
 
         # 3. Verificação de valores faltantes
         print("\nValores faltantes antes da imputação:")
         print(df[numeric_cols].isna().sum())
 
-        # 4. Imputação de valores faltantes (versão robusta)
+        # 4. Imputação mais inteligente (corrigida para evitar o warning)
         for col in numeric_cols:
-            if col in df.columns:
-                if df[col].count() == 0:  # Se não há valores válidos
-                    print(f"\nAtenção: Coluna '{col}' sem valores válidos. Preenchendo com 0.")
-                    df[col] = 0
-                else:
-                    imputer = SimpleImputer(strategy='mean')
-                    df[col] = imputer.fit_transform(df[[col]]).ravel()
+            if df[col].isna().all():  # Se TODOS os valores estão faltando
+                print(f"\nERRO CRÍTICO: Coluna '{col}' não tem nenhum valor válido.")
+                # Como contingência, vamos usar valores aleatórios baseados em distribuições realistas
+                if col == 'Salário':
+                    df[col] = np.random.normal(3000, 1500, len(df)).round(2)
+                elif col == 'Patrimônio':
+                    df[col] = np.random.normal(20000, 10000, len(df)).round(2)
+                elif col == 'Parcelas_Médias':
+                    df[col] = np.random.uniform(0, 1000, len(df)).round(2)
+            else:
+                # Imputação baseada na mediana (menos sensível a outliers)
+                median = df[col].median()
+                df[col] = df[col].fillna(median)  # Forma correta sem warning
 
         print("\nEstatísticas após imputação:")
         print(df[numeric_cols].describe())
 
-        # 5. Verificação de colunas necessárias
-        required_cols = numeric_cols + ['Estado', 'Cidade', 'Bairro', 'Status']
-        missing_cols = [col for col in required_cols if col not in df.columns]
-        if missing_cols:
-            raise ValueError(f"Colunas faltantes: {missing_cols}")
+        # 5. Engenharia de features
+        # Criar novas features que podem ser úteis
+        df['Salário_Patrimônio_Ratio'] = df['Salário'] / (df['Patrimônio'] + 1)  # +1 para evitar divisão por zero
+        df['Endividamento'] = df['Parcelas_Médias'] / (df['Salário'] + 1)
 
-        # 6. Codificação de categorias
-        categorical_cols = ['Estado', 'Cidade', 'Bairro', 'Status']
-        for col in categorical_cols:
-            if col in df.columns:
-                df[col] = LabelEncoder().fit_transform(df[col].astype(str))
+        # 6. Codificação de categorias com get_dummies
+        categorical_cols = ['Estado', 'Cidade', 'Bairro']
+        df = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
 
-        # 7. Análise de correlação
-        try:
-            plt.figure(figsize=(10, 8))
-            corr_matrix = df[required_cols].corr()
-            sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm')
-            plt.title("Matriz de Correlação")
-            plt.savefig('correlacao.png')
-            print("\nMatriz de correlação salva em 'correlacao.png'")
-        except Exception as e:
-            print(f"\nErro ao gerar matriz de correlação: {str(e)}")
+        # 7. Verificar balanceamento das classes
+        print("\nDistribuição das classes de Status:")
+        print(df['Status'].value_counts())
 
-        # 8. Modelagem
-        X = df[['Salário', 'Patrimônio', 'Parcelas_Médias', 'Estado', 'Cidade', 'Bairro']]
+        # 8. Preparação dos dados para modelagem
+        # Lista de colunas para remover (ajuste conforme seu dataset)
+        cols_to_drop = ['ID', 'Nome', 'Gênero', 'Empréstimo', 'Financiamento', 'Score', 'Crédito_Pre_Aprovado']
+        X = df.drop(['Status'] + [col for col in cols_to_drop if col in df.columns], axis=1)
         y = df['Status']
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        # 9. Balanceamento das classes com SMOTE
+        smote = SMOTE(random_state=42)
+        X_res, y_res = smote.fit_resample(X, y)
 
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
+        # 10. Divisão dos dados
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_res, y_res, test_size=0.2, random_state=42, stratify=y_res)
+
+        # 11. Modelagem com pipeline
+        model = make_pipeline(
+            StandardScaler(),
+            RandomForestClassifier(
+                n_estimators=200,
+                class_weight='balanced',
+                random_state=42,
+                max_depth=10,
+                min_samples_split=5
+            )
+        )
+
         model.fit(X_train, y_train)
 
-        # 9. Avaliação
+        # 12. Avaliação
         print("\nAvaliação do Modelo:")
         print(classification_report(y_test, model.predict(X_test)))
 
-        # 10. Salvar modelo
-        joblib.dump(model, 'modelo_credito.pkl')
-        print("\nModelo treinado salvo com sucesso como 'modelo_credito.pkl'")
+        # 13. Feature Importance
+        rf = model.named_steps['randomforestclassifier']
+        feature_importances = pd.DataFrame({
+            'Feature': X.columns,
+            'Importance': rf.feature_importances_
+        }).sort_values('Importance', ascending=False)
+
+        print("\nImportância das Features:")
+        print(feature_importances.to_string())
+
+        # 14. Salvar modelo e feature names
+        joblib.dump({
+            'model': model,
+            'feature_names': list(X.columns),
+            'preprocessing_info': {
+                'numeric_cols': numeric_cols,
+                'categorical_cols': categorical_cols
+            }
+        }, 'modelo_credito_melhorado.pkl')
+
+        print("\nModelo treinado salvo com sucesso como 'modelo_credito_melhorado.pkl'")
 
     except Exception as e:
         print(f"\nERRO: {str(e)}")
-        print("\nInformações para diagnóstico:")
-        if 'df' in locals():
-            print("\nTipos de dados:")
-            print(df.dtypes)
-            print("\nValores únicos em 'Salário':")
-            print(df['Salário'].unique())
-        else:
-            print("DataFrame não foi carregado corretamente.")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
+    # Opcional: Filtrar warnings específicos se necessário
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
     main()
