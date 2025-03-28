@@ -114,4 +114,4 @@ Testar outros algoritmos (XGBoost, LightGBM)
 Criar dashboard de monitoramento
 
 📄 Licença
-MIT License - Consulte o arquivo LICENSE para mais detalhes.
+MIT License - Consulte o arquivo LICENSE para mais detalhes.                                                                   Obs : O dataset foi criado usando este  script que esta nesse repositorio :           https://github.com/lj1981/analise_credito    arquivo : analise_credito.py
