@@ -4,4 +4,5 @@ matplotlib.pyplot
 seaborn
 sklearn
 joblib
+imblearn
 re
