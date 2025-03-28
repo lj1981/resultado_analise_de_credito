@@ -1,164 +1,117 @@
-📌 Visão Geral
-Este sistema automatizado realiza análise de crédito utilizando machine learning para classificar clientes como "aprovados" ou "negados" com base em suas informações financeiras e demográficas.
+ - Sistema de Análise de Crédito
 
-📋 Pré-requisitos
+📌 Visão Geral
+Este projeto implementa um sistema completo de análise de crédito utilizando machine learning. O sistema processa dados financeiros, realiza limpeza e transformação dos dados, treina um modelo preditivo e avalia seu desempenho.
+
+🛠️ Tecnologias Utilizadas
+
 Python 3.8+
 
-Bibliotecas listadas em requirements.txt
+Pandas (Manipulação de dados)
 
-Arquivo CSV com dados dos clientes
+Scikit-learn (Machine Learning)
 
-📂 Estrutura do Projeto
+Imbalanced-learn (Balanceamento de classes)
 
-/analise_credito/
-│── /dados/
-│   └── dataset_credito_simulado.csv  # Dados de entrada
-│── /modelos/
-│   └── modelo_credito.pkl            # Modelo treinado
-│── analise_credito.py                # Script principal
-│── correlacao.png                    # Matriz de correlação
-│── README.md                         # Esta documentação
-└── requirements.txt                  # Dependências
+Matplotlib/Seaborn (Visualização)
 
-🔧 Instalação
+Joblib (Serialização do modelo)
 
-1. git clone [URL_DO_REPOSITORIO]
-cd analise_credito
+📋 Estrutura do Código
 
-2. Instale as dependências:
+1. Pré-processamento dos Dados
 
-3. pip install -r requirements.txt
+def clean_currency(value):
+    """Converte valores monetários para float"""
+    # Implementação da limpeza...
 
-🛠 Configuração
+2. Engenharia de Features
 
-Edite as variáveis no início do script principal conforme necessário:
+Criação de novas variáveis:
 
-# Caminho para o arquivo de dados
-FILE_PATH = 'dados/dataset_credito_simulado.csv'
+Salário_Patrimônio_Ratio
 
-# Colunas necessárias
-COLUNAS_NUMERICAS = ['Salário', 'Patrimônio', 'Parcelas_Médias']
-COLUNAS_CATEGORICAS = ['Estado', 'Cidade', 'Bairro', 'Status']
+Endividamento
 
-🚀 Como Executar
+Codificação de variáveis categóricas (one-hot encoding)
 
-python analise_credito.py
+3. Modelagem Preditiva
 
-🔄 Fluxo de Processamento
-
-1. Carregamento de Dados
-
-Lê o arquivo CSV especificado
-
-Remove espaços extras nos nomes das colunas
-
-2. Pré-processamento
-
-Limpeza de valores monetários (remove 'R$', converte vírgulas)
-
-Conversão para tipos numéricos
-
-Imputação de valores faltantes
-
-3. Análise Exploratória
-
-Gera matriz de correlação
-
-Salva gráfico em correlacao.png
-
-4. Modelagem Preditiva
-
-Codifica variáveis categóricas
-
-Divide dados em treino/teste
-
-Treina modelo RandomForest
-
-5. Avaliação
-
-Gera relatório de classificação
-
-Exibe matriz de confusão
-
-6. Persistência
-
-Salva modelo treinado em modelos/modelo_credito.pkl
-
-📊 Entrada de Dados
-
-O arquivo CSV deve conter no mínimo estas colunas:
-
-- Salário: Valor numérico ou formato monetário (R$1,234.56)
-
-- Patrimônio: Valor numérico ou formato monetário
-
-- Parcelas_Médias: Número de parcelas (valor inteiro)
-
-- Estado, Cidade, Bairro: Dados categóricos
-
-- Status: (0 = Negado, 1 = Aprovado)
-
-Exemplo de linha:
-
-Salário,Patrimônio,Parcelas_Médias,Estado,Cidade,Bairro,Status
-R$3,500.00,15000.00,5,SP,São Paulo,Moema,1
-
-📤 Saída
-
-1. Resultados do Modelo (console):
-
-Relatório de classificação
-
-Acurácia do modelo
+model = make_pipeline(
+    StandardScaler(),
+    RandomForestClassifier(n_estimators=200, ...)
+)
+4. Avaliação do Modelo
+Métricas: precision, recall, f1-score
 
 Matriz de confusão
 
-2. Arquivos Gerados:
+Feature importance
 
-modelo_credito.pkl: Modelo treinado
+🚀 Como Executar
+Instalação das dependências:
 
-correlacao.png: Matriz de correlação
+bash
+Copy
+pip install -r requirements.txt
 
-🛠️ Como Adicionar Novos Dados
+Execução do script:
 
-Para classificar novos clientes, crie um DataFrame com a mesma estrutura:
 
-novos_clientes = pd.DataFrame({
-    'Salário': [4000, 2500],
-    'Patrimônio': [18000, 8000],
-    'Parcelas_Médias': [4, 6],
-    'Estado': ['SP', 'RJ'],
-    'Cidade': ['São Paulo', 'Rio de Janeiro'],
-    'Bairro': ['Vila Olímpia', 'Copacabana']
-})
+python analise_credito.py
 
-# Carregar modelo
-modelo = joblib.load('modelos/modelo_credito.pkl')
+Saídas geradas:
 
-# Fazer previsões
-previsoes = modelo.predict(novos_clientes)
+modelo_credito_melhorado.pkl (Modelo treinado)
 
-⚠️ Solução de Problemas
+correlacao.png (Matriz de correlação)
 
-Problema: Erro na imputação de valores
-Solução: Verifique se as colunas numéricas contêm valores válidos
+⚙️ Configuração
 
-Problema: Erro ao gerar matriz de correlação
-Solução: Confira se todas colunas numéricas foram convertidas corretamente
+Parâmetros Ajustáveis
 
+# No código principal:
+n_estimators = 200    # Número de árvores na Random Forest
+test_size = 0.2       # Proporção para teste
+random_state = 42     # Semente para reprodutibilidade
+
+📊 Fluxo de Processamento
+
+Carrega o dataset
+
+Realiza limpeza dos dados
+
+Trata valores faltantes
+
+Cria novas features
+
+Codifica variáveis categóricas
+
+Balanceia as classes
+
+Treina o modelo
+
+Avalia o desempenho
+
+Salva o modelo treinado
+
+📝 Notas Importantes
+
+O dataset deve conter as colunas especificadas
+
+Valores monetários devem estar em formato compatível
+
+Para produção, considerar adicionar logs e monitoramento
 
 📈 Melhorias Futuras
 
-- Adicionar validação cruzada
+Implementar API para predições em tempo real
 
-- Implementar tunagem de hiperparâmetros
+Adicionar validação cruzada
 
-- Criar interface gráfica
+Testar outros algoritmos (XGBoost, LightGBM)
+
+Criar dashboard de monitoramento
 
 📄 Licença
-
-Este projeto está licenciado sob a licença MIT.
-   
-
-
-
+MIT License - Consulte o arquivo LICENSE para mais detalhes.
